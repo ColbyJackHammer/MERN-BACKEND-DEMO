@@ -130,16 +130,192 @@ const carSchema = new Schema({
 //export schema to be used in other files
 module.exports = mongoose.model("VehicleINFO", carSchema)
 
-9.) set up controllers for functionality for URLs
+9.) Set Up Controllers for functionality for urls
 
--create folder called controllers
--create file inside for hold controllers
+    -create a folder titled Controllers 
+    -create a file inside to hold Controllers
 
+content for file inside of Controllers folder inside of Server Folder: 
 
-content for file inside of controllers folder inside of server folder
-
-**new terms**
+*new terms
 
 Asynchronous programming is a technique that enables your program to start a potentially long-running task and still be able to be responsive to other events while that task runs, rather than having to wait until that task has finished. Once that task has finished, your program is presented with the result.
 
 next() The next() method returns an object with two properties done and value . You can also provide a parameter to the next method to send a value to the generator.
+
+Informational responses ( 100 – 199 )
+Successful responses ( 200 – 299 )
+Redirection messages ( 300 – 399 )
+Client error responses ( 400 – 499 )
+Server error responses ( 500 – 599 )
+
+const Car = require("../Model/VehicleInformation");
+
+
+//utilize function expression to get all cars from Database
+
+const getAllCars = async (req, res, next) =>{
+    let cars;
+    try{
+        cars = await Car.find()
+    }catch(err){
+    console.log(err)
+    }
+    if(!cars){
+        return res.status(404).json({message: "No Vehicles Found"})
+    }
+    return res.status(200).json({cars});
+}
+
+
+
+const getById = async (req, res, next) =>{
+    const id = req.params.id;
+    let car;
+    try{
+        car = await Car.findById(id);
+    }catch(err){
+        console.log(err)
+    }
+    if(!car){
+        return res.status(404).json({message: "No Vehicle Found"})
+    }
+    return res.status(200).json({car})
+};
+
+
+//add a car to the DB by way of the URL 
+const addCar = async (req, res, next)=>{
+    const {make_model, price, year, engine, available } = req.body;
+    let vehicle;
+    try{
+        vehicle = new Car({
+            make_model,
+            price,
+            year,
+            engine,
+            available,
+        });
+        await vehicle.save();
+    }catch(err){
+        console.log(err)
+    }
+    if(!vehicle){
+        return res.status(500).json({message : "Unable to Add Vehicle"})
+    }
+    return res.status(201).json({vehicle})
+};
+
+
+// create function to update a value based on it ID. 
+
+const updateCar = async (req, res, next) => {
+    const id = req.params.id;
+    const {make_model, price, year, engine, available } = req.body;
+    let car;
+    try{
+        car = await Car.findByIdAndUpdate(id, {
+            make_model,
+            price,
+            year,
+            engine,
+            available
+        });
+        car = await car.save();
+    }catch(err){
+        console.log(err);
+    }
+    if(!car){
+        return res.status(404).json({message: "Unable to update by this ID value"})
+    }
+    return res.status(200).json({car});
+};
+
+
+//delete a car from your DB by creating a function to be assigned for your deleting URL
+const deleteCar = async (req,res, next) => {
+    const id = req.params.id;
+    let car;
+    try{
+        car = await Car.findByIdAndRemove(id);
+    } catch(err){
+        console.log(err);
+    }
+    if(!car){
+        return res.status(404).json({ message: "Unable to Delete By This ID"});
+    }
+    return res.status(200).json({message: "Vehicle Successfully Deleted"})
+};
+
+//export functions to be used for URLS for functionality
+
+exports.getAllCars = getAllCars;
+exports.getById = getById;
+exports.addCar = addCar;
+exports.updateCar = updateCar;
+exports.deleteCar = deleteCar;
+
+
+
+
+10.) Create Routes to assign functionality to URLS 
+
+    -create a folder titled Routes  
+    - create a file inside to house controllers to be assigned to requests
+
+content for routes.js file:
+
+const express = require("express");
+const router = express.Router();
+const Car = require("../Model/VehicleInformation");
+const carControllers = require("../Controllers/car-controllers");
+
+//assign functionality to requests for URLs
+
+//localhost:3001/cars/get
+router.get("/get", carControllers.getAllCars);
+
+//localhost:3001/cars/update
+router.post("/update", carControllers.addCar);
+
+//localhost/3001/cars/get/:id
+router.get("/get/:id", carControllers.getById);
+
+//localhost:3001/cars/update/:id
+router.put("/update/:id", carControllers.updateCar);
+
+//localhost:3001/cars/delete/:id
+router.delete("/delete/:id", carControllers.deleteCar);
+
+module.exports = router;
+
+
+
+11.) Amend index.js to incorporate routes for CRUD processing 
+
+*updated index.js content: 
+
+//set up file to be a server, utilize API
+
+const express = require("express");
+const app = express();
+const mongoose = require("mongoose");
+
+//Middleware
+app.use(express.json());
+const cors = require("cors");
+
+app.use(cors());
+const router = require("./routes/car-routes");  <------ add this line
+
+//localhost:3001/cars
+app.use("/cars", router)    <----- add this line 
+
+//establish link to mongoDB Atlas Database
+mongoose.connect("mongodb+srv://mbradford1s:Ray24Lewis$$@cluster0.1xgfej0.mongodb.net/ExoticDealership?retryWrites=true&w=majority"
+).then(() => console.log("Connected To Database"))
+.then(() =>{
+    app.listen(3001)
+}).catch((err) => console.log(err));
+
+
