@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const Car = require("../Model/VehicleInfo");
+//const Car = require("../Model/VehicleInfo");
 const carControllers = require("../Controllers/car-controllers");
 
 //assign functionality to requests for URLs
@@ -9,7 +9,7 @@ const carControllers = require("../Controllers/car-controllers");
 router.get("/get", carControllers.getAllCars);
 
 //localhost:3001/cars/update
-router.post("/update", carControllers.addCar);
+router.post("/add", carControllers.addCar);
 
 //localhost/3001/cars/get/:id
 router.get("/get/:id", carControllers.getById);

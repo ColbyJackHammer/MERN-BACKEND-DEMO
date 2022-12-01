@@ -1,3 +1,5 @@
+const Car= require("../Model/VehicleInfo");
+
 const getAllCars = async (req, res, next) =>{
     let cars;
     try{
